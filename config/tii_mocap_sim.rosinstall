@@ -1,7 +1,7 @@
 #sim setup
 - git:
-    local-name: tii_gazebo
-    uri: https://github.com/rudislabs/tii_gazebo.git
+    local-name: qualisys_ros
+    uri: https://github.com/rudislabs/qualisys_ros.git
     version: main
 - git:
     local-name: Firmware
