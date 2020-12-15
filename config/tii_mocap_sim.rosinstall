@@ -1,0 +1,13 @@
+#sim setup
+- git:
+    local-name: tii_gazebo
+    uri: https://github.com/rudislabs/tii_gazebo.git
+    version: main
+- git:
+    local-name: Firmware
+    uri: https://github.com/rudislabs/PX4-Autopilot.git
+    version: master
+- git:
+    local-name: mavlink_sitl_gazebo
+    uri: https://github.com/rudislabs/PX4-SITL_gazebo.git
+    version: master

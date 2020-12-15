@@ -1,0 +1,31 @@
+#!/bin/bash
+set -u # error on undefined
+set -e # stop on error
+#set -x # for debugging
+
+export TMPDIR=/tmp
+
+root=$PWD
+
+for file in ~/.bashrc ~/.profile; do
+  # ros
+  if ! grep -q "source /opt/ros/$ROS_DISTRO/setup.bash" $file; then
+    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >>$file
+  fi
+
+  # tii_ws
+  if ! grep -q "source $root/devel/setup.bash" $file; then
+    echo "source $root/devel/setup.bash" >>$file
+  fi
+
+  # ccache
+  if ! grep -q "export PATH=/usr/lib/ccache:\$PATH" $file; then
+    echo "export PATH=/usr/lib/ccache:\$PATH" >>$file
+  fi
+
+  #	# ssh
+  #	if ! grep -q "eval \`ssh-agent\`" $file
+  #	then
+  #		echo "eval \`ssh-agent\`" >> $file
+  #	fi
+done

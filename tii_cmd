@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+import sys
+import os
+import sys
+import subprocess
+import glob
+import argparse
+import shutil
+
+def config(args):
+
+    if os.path.isfile(args.file):
+        if not os.path.isdir('src'):
+            os.mkdir('src')
+        if os.path.isfile('src/.rosinstall'):
+            os.remove('src/.rosinstall')
+        with open(args.file, 'r') as original: data = original.read()
+        with open('src/.rosinstall', 'w') as modified: modified.write("# " + args.file + "\n" + data)
+        print('replacing src/.rosintall with {:s}'.format(args.file))
+    else:
+        sys.exit('error, no file: {:s}'.format(args.file))
+    print('configuration complete')
+
+
+def merge(args):
+
+    if os.path.isfile(args.file):
+        file_path = os.path.abspath(args.file)
+        if not os.path.isdir('src'):
+            os.mkdir('src')
+        if not os.path.isfile('src/.rosinstall'):
+            sys.exist('need to call config first, no .rosinstall file to merge with')
+        shutil.copy(args.file, 'src/.rosinstall')
+        os.chdir('src')
+        subprocess.check_Call('wstool merge {file_path:s}'.format(
+            **locals()).split())
+    else:
+        sys.exit('error, no file: {:s}'.format(args.file))
+
+def build(args):
+    subprocess.check_call('catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3'.split())
+    print('build complete')
+
+def update(args):
+    subprocess.check_call('git pull'.split())
+    subprocess.check_call('./scripts/update.sh'.split())
+    print('update complete')
+
+def status(args):
+    os.chdir('src')
+    subprocess.check_call('wstool status'.split())
+
+def diff(args):
+    os.chdir('src')
+    subprocess.check_call('wstool diff'.split())
+
+def info(args):
+    os.chdir('src')
+    print('Current configuration file:')
+    subprocess.check_call('head -n 1 .rosinstall'.split())
+    subprocess.check_call('wstool info'.split())
+    subprocess.check_call('git log -n 1 --pretty=oneline'.split())
+    subprocess.check_call('git status'.split())
+
+def clean(args):
+
+    for del_dir in ['build', 'devel', 'logs']:
+        if os.path.isdir(del_dir):
+            shutil.rmtree(del_dir)
+            print('removing dir: {:s}'.format(del_dir))
+
+    if args.all:
+        for del_dir in ['src']:
+            if os.path.isdir(del_dir):
+                shutil.rmtree(del_dir)
+                print('removing dir: {:s}'.format(del_dir))
+        subprocess.check_call('git clean -dxfi'.split())
+        print('removing all non-version controlled files')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='TII ros workspace setup script')
+    subparsers = parser.add_subparsers(title='commands')
+
+    # config command
+    config_parser = subparsers.add_parser('config', help='configure workspace')
+    config_parser.add_argument('file', help='config file name')
+    config_parser.set_defaults(func=config)
+
+    # build command
+    build_parser = subparsers.add_parser('build', help='build workspace')
+    build_parser.add_argument('--debug', help='build with debug enabled', action='store_true')
+    build_parser.set_defaults(func=build)
+
+    # update command
+    update_parser = subparsers.add_parser('update', help='update workspace')
+    update_parser.set_defaults(func=update)
+
+    # merge command
+    merge_parser = subparsers.add_parser('merge', help='merge in additional config file')
+    merge_parser.add_argument('file', help='config file name')
+    merge_parser.set_defaults(func=merge)
+
+    # status command
+    status_parser = subparsers.add_parser('status', help='modified files in the workspace')
+    status_parser.set_defaults(func=status)
+
+    # info command
+    info_parser = subparsers.add_parser('info', help='repositories in the workspace')
+    info_parser.set_defaults(func=info)
+
+    # diff command
+    diff_parser = subparsers.add_parser('diff', help='shows diff for repository')
+    diff_parser.set_defaults(func=diff)
+
+    # clean command
+    clean_parser = subparsers.add_parser('clean', help='clean workspace')
+    clean_parser.set_defaults(func=clean)
+    clean_parser.add_argument('--all', help='remove all non version control files',
+            action='store_true')
+
+    # parse
+    args = parser.parse_args()
+
+    # call function
+    args.func(args)
